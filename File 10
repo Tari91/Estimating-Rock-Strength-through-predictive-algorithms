@@ -1,0 +1,67 @@
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Step 1: Generate Synthetic Data
+np.random.seed(42)
+n_samples = 1000
+
+# Synthetic geotechnical features
+porosity = np.random.uniform(5, 30, n_samples)             # in %
+density = np.random.uniform(2.2, 3.0, n_samples)            # g/cm³
+grain_size = np.random.uniform(0.01, 2.0, n_samples)        # mm
+water_content = np.random.uniform(1, 15, n_samples)         # %
+depth = np.random.uniform(5, 500, n_samples)                # meters
+cementation_index = np.random.uniform(0.1, 1.0, n_samples)  # unitless
+
+# Simulated Rock Strength (e.g., Uniaxial Compressive Strength - UCS in MPa)
+rock_strength = (
+    120 - 1.5 * porosity +
+    10 * density +
+    0.05 * depth -
+    2 * water_content +
+    50 * cementation_index +
+    np.random.normal(0, 5, n_samples)  # noise
+)
+
+# Step 2: Create DataFrame
+df = pd.DataFrame({
+    'Porosity': porosity,
+    'Density': density,
+    'GrainSize': grain_size,
+    'WaterContent': water_content,
+    'Depth': depth,
+    'CementationIndex': cementation_index,
+    'RockStrength': rock_strength
+})
+
+# Step 3: Train-Test Split
+X = df.drop('RockStrength', axis=1)
+y = df['RockStrength']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Model Training
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Step 5: Prediction and Evaluation
+y_pred = model.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f"Mean Squared Error: {mse:.2f}")
+print(f"R² Score: {r2:.2f}")
+
+# Step 6: Visualization
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x=y_test, y=y_pred)
+plt.xlabel("Actual Rock Strength (MPa)")
+plt.ylabel("Predicted Rock Strength (MPa)")
+plt.title("Actual vs Predicted Rock Strength")
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 'r--')
+plt.grid(True)
+plt.show()
